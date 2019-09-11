@@ -3,15 +3,15 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Danish Geocoder
+name=Danish Address Tools
 # QgsNetworkAccessManager.blockingGet was introduced in 3.6
 qgisMinimumVersion=3.6 
-description=This plugin uses DAWA to geocode Danish addresses with QGIS processing framework
+description=This plugin provides tools to work with Danish addresses within the QGIS processing framework.
 version=0.1
 author=Septima
 email=asger@septima.dk
 
-about=This plugin geocodes Danish addresses using DAWA (Danmarks Adresser Web API).
+about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. The plugin is developed and maintained by Septima.
 
 tracker=http://bugs
 repository=http://repo

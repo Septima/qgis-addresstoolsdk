@@ -279,7 +279,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         return self.helpString()
 
     def helpString(self):
-        return """<p>Denne algoritme anvender DAWAs Datavask-API.</p><p>
+        return self.tr("""<p>Denne algoritme anvender DAWAs Datavask-API.</p><p>
 
         Datavask-API'et gør det muligt at oversætte en ustruktureret adressetekst til en officiel, struktureret adresse med ID, også selvom adressen evt. indeholder en stavefejl eller den officielle adressebetegnelse er ændret.
 </p><p>
@@ -295,13 +295,12 @@ En gyldig adresse kan skrives på flere forskellige måder (varianter). Man kan 
 </p><p>
 Bemærk, at der er separate API'er til vask af adresser og adgangsadresser. Forskellen på en adresse og en adgangsadresse er at adressen rummer eventuel etage- og/eller dørbetegnelse. Det gør adgangsadressen ikke.
 <p>
-        """
+        """)
 
     def helpUrl(self):
         return "https://www.septima.dk"
 
-    @staticmethod
-    def tr(string):
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):

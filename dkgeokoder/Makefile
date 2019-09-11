@@ -26,25 +26,25 @@
 #Add iso code for any locales you want to support here (space separated)
 # default is no locales
 # LOCALES = af
-LOCALES = da, en
+LOCALES = da en
 
 # If locales are enabled, set the name of the lrelease binary on your system. If
 # you have trouble compiling the translations, you may have to specify the full path to
 # lrelease
-#LRELEASE = lrelease
+LRELEASE = lrelease
 #LRELEASE = lrelease-qt4
 
 
 # translation
-SOURCES = \
-	__init__.py \
-	dkgeokoder.py 
+SOURCES = __init__.py dkgeokoder.py dkgeokoder_algorithm.py dkgeokoder_provider.py
 
 PLUGINNAME = dkgeokoder
 
 PY_FILES = \
 	__init__.py \
-	dkgeokoder.py 
+	dkgeokoder.py \
+	dkgeokoder_algorithm.py \
+	dkgeokoder_provider.py
 
 UI_FILES = 
 

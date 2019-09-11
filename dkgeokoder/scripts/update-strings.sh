@@ -4,7 +4,8 @@ LOCALES=$*
 # Get newest .py files so we don't update strings unnecessarily
 
 CHANGED_FILES=0
-PYTHON_FILES=`find . -regex ".*\(ui\|py\)$" -type f`
+PYTHON_FILES=`find . -name "*.py" -o -name "*.ui" -type f`
+echo $PYTHON_FILES
 for PYTHON_FILE in $PYTHON_FILES
 do
   CHANGED=$(stat -c %Y $PYTHON_FILE)
@@ -19,7 +20,7 @@ done
 UPDATE=false
 for LOCALE in ${LOCALES}
 do
-  TRANSLATION_FILE="i18n/$LOCALE.ts"
+  TRANSLATION_FILE="i18n/$LOCALE.qt.ts"
   if [ ! -f ${TRANSLATION_FILE} ]
   then
     # Force translation string collection as we have a new language file
@@ -48,7 +49,7 @@ then
     echo "i18n/"${LOCALE}".ts"
     # Note we don't use pylupdate with qt .pro file approach as it is flakey
     # about what is made available.
-    pylupdate4 -noobsolete ${PYTHON_FILES} -ts i18n/${LOCALE}.ts
+    pylupdate5 -noobsolete -verbose ${PYTHON_FILES} -ts i18n/${LOCALE}.ts
   done
 else
   echo "No need to edit any translation files (.ts) because no python files"

@@ -35,16 +35,14 @@ LRELEASE = lrelease
 #LRELEASE = lrelease-qt4
 
 
-# translation
-SOURCES = __init__.py dkgeokoder.py dkgeokoder_algorithm.py dkgeokoder_provider.py
 
-PLUGINNAME = dkgeokoder
+PLUGINNAME = AddressToolsDK
 
 PY_FILES = \
 	__init__.py \
-	dkgeokoder.py \
-	dkgeokoder_algorithm.py \
-	dkgeokoder_provider.py
+	addresstoolsdk.py \
+	addresstoolsdk_geocode_algorithm.py \
+	addresstoolsdk_provider.py
 
 UI_FILES = 
 

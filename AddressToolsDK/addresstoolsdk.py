@@ -34,6 +34,7 @@ import os
 import sys
 import inspect
 
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.core import QgsProcessingAlgorithm, QgsApplication
 from .addresstoolsdk_provider import AddressToolsDKProvider
 
@@ -47,6 +48,21 @@ class AddressToolsDKPlugin(object):
 
     def __init__(self):
         self.provider = None
+
+        # initialize plugin directory
+        self.plugin_dir = os.path.dirname(__file__)
+
+        # initialize locale
+        locale = QSettings().value('locale/userLocale')[0:2]
+        locale_path = os.path.join(
+            self.plugin_dir,
+            'i18n',
+            '{}.qm'.format(locale))
+        if os.path.exists(locale_path):
+            self.translator = QTranslator()
+            self.translator.load(locale_path)
+            if qVersion() > '4.3.3':
+                QCoreApplication.installTranslator(self.translator)
 
     def initProcessing(self):
         """Init Processing provider for QGIS >= 3.8."""

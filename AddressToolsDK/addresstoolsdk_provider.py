@@ -72,7 +72,7 @@ class AddressToolsDKProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('Danish address tools')
+        return self.tr('Danske adresseværktøjer')
 
     def icon(self):
         """

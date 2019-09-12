@@ -133,12 +133,12 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        self.DAWA_ADDRESS_TYPES = [("adresser", self.tr("Addresses")), ("adgangsadresser", self.tr("Address access"))]
+        self.DAWA_ADDRESS_TYPES = [("adresser", self.tr("Addresser")), ("adgangsadresser", self.tr("Adgangsadresser"))]
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
-                self.tr('Input address data'),
+                self.tr('Input adressedata'),
                 [QgsProcessing.TypeVectorAnyGeometry]
             )
         )
@@ -146,7 +146,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterEnum(
                 self.ADDRESS_TYPE,
-                self.tr('Input addresses type'),
+                self.tr('Input adressetype'),
                 options=[x[1] for x in self.DAWA_ADDRESS_TYPES], 
                 defaultValue=0
             )
@@ -155,7 +155,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterExpression(
                 self.EXPRESSION,
-                self.tr('Address expression'),
+                self.tr('Adresse-udtryk'),
                 parentLayerParameterName = self.INPUT
             )
         )
@@ -166,7 +166,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('Output layer')
+                self.tr('Output lag')
             )
         )
 
@@ -185,8 +185,8 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
 
 
         id_field_name = self.tr("dawa_id")
-        denote_field_name = self.tr("dawa_denotation")
-        cat_field_name = self.tr("dawa_category")
+        denote_field_name = self.tr("dawa_betegnelse")
+        cat_field_name = self.tr("dawa_kategori")
         fields = source.fields()
         fields.append(QgsField(id_field_name, QVariant.String, len=40))
         fields.append(QgsField(denote_field_name, QVariant.String))
@@ -249,7 +249,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Geocode Danish addresses using DAWA'
+        return 'Geokod danske adresser med DAWA'
 
     def displayName(self):
         """
@@ -273,32 +273,31 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Geocoding'
+        return 'Geokodning'
 
     def shortDescription(self):
         return self.helpString()
 
     def helpString(self):
-        return self.tr("""<p>Denne algoritme anvender DAWAs Datavask-API.</p><p>
+        return self.tr("""<p>Denne algoritme er udviklet af <a href="https://www.septima.dk">Septima</a> og anvender <a href="https://dawa.aws.dk/">DAWA</a>s Datavask-API.</p><p>
 
         Datavask-API'et gør det muligt at oversætte en ustruktureret adressetekst til en officiel, struktureret adresse med ID, også selvom adressen evt. indeholder en stavefejl eller den officielle adressebetegnelse er ændret.
-</p><p>
-Datavask-API'et anvendes ofte i en situation hvor man har tidligere indtastede adresser, som man ønsker at validere og evt. korrigere.
-</p><p>
-Datavask-API'et tager imod en adressetekst og returnerer den adresse, som bedst matcher adressen. Har anvenderen en struktueret adresse i forvejen skal anvenderen selv sammensætte adresseteksten.
-</p><p>
-Datavask svar indeholder en angivelse af hvor sikkert svaret er, anført som en kategori A, B eller C. Kategori A indikerer, at der er tale om et eksakt match. Kategori B indikerer, at der ikke er tale om et helt eksakt match, men at resultatet stadig er sikkert. Kategori C angiver, at resultatet usikkert.
-</p><p>
-Datavask anvender også historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. Endvidere håndterer datavasken også adresser hvor der er anvendt stormodtagerpostnumre.
-</p><p>
-En gyldig adresse kan skrives på flere forskellige måder (varianter). Man kan vælge at udelade det supplerende bynavn, man kan benytte det forkorterede "adresseringsvejnavn" i stedet for det fulde vejnavn, og man kan anvende såkaldte "stormodtagerpostnumre". Datavask-resultatet angiver, hvilken variant af de mulige skrivemåder, som bedst matchede den angivne adressebetegnelse.
-</p><p>
-Bemærk, at der er separate API'er til vask af adresser og adgangsadresser. Forskellen på en adresse og en adgangsadresse er at adressen rummer eventuel etage- og/eller dørbetegnelse. Det gør adgangsadressen ikke.
+</p>
 <p>
+Datavask-API'et tager imod en adressetekst og returnerer den adresse, som bedst matcher adressen. Har anvenderen en struktueret adresse i forvejen skal anvenderen selv sammensætte adresseteksten evt. ved brug af et udtryk.
+</p>
+<p>
+Bemærk, at der er separate API'er til vask af <b>adresser</b> og <b>adgangsadresser</b>. Forskellen på en adresse og en adgangsadresse er at adressen rummer eventuel etage- og/eller dørbetegnelse. Det gør adgangsadressen ikke.
+<p><p>
+Datavask svar indeholder en angivelse af hvor sikkert svaret er, anført som en <b>kategori</b> A, B eller C. Kategori A indikerer, at der er tale om et eksakt match. Kategori B indikerer, at der ikke er tale om et helt eksakt match, men at resultatet stadig er sikkert. Kategori C angiver, at resultatet usikkert.
+</p>
+<p>
+En gyldig adresse kan skrives på flere forskellige måder (varianter). Man kan vælge at udelade det supplerende bynavn, man kan benytte det forkorterede "adresseringsvejnavn" i stedet for det fulde vejnavn, og man kan anvende såkaldte "stormodtagerpostnumre".
+</p>
+<p>
+Datavask anvender også historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. Endvidere håndterer datavasken også adresser hvor der er anvendt stormodtagerpostnumre.
+</p>
         """)
-
-    def helpUrl(self):
-        return "https://www.septima.dk"
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

@@ -139,7 +139,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
                 self.tr('Input adressedata'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVector]
             )
         )
 

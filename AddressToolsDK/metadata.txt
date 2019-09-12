@@ -7,26 +7,29 @@ name=Danish Address Tools
 # QgsNetworkAccessManager.blockingGet was introduced in 3.6
 qgisMinimumVersion=3.6 
 description=This plugin provides tools to work with Danish addresses within the QGIS processing framework.
+description[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing.
 version=0.1
 author=Septima
 email=asger@septima.dk
 
-about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. The plugin is developed and maintained by Septima.
+about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. For now there is one tool: Geocoding using DAWA. The plugin is developed and maintained by Septima.
+about[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing. Pt er der eet værktøj: Geokod adresser med DAWA. Pluginet er udviklet og vedligeholdes af Septima.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/Septima/qgis-addresstoolsdk/issues
+repository=https://github.com/Septima/qgis-addresstoolsdk
 # End of mandatory metadata
 
 # Recommended items:
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=Version 0.1: Initial version with one algorithm "Geokod danske adresser med DAWA"
+
 
 # Tags are comma separated with spaces allowed
-tags=geocoding, geokodning, geokod, geokode, geokoder, Danmark, danske, adresse, adresser, adressevask
+tags=geocoding,geokodning,geokod,geokode,geokoder,Danmark,danske,adresse,adresser,adressevask,dawa
 
-homepage=http://homepage
+homepage=https://github.com/Septima/qgis-addresstoolsdk
 category=Analysis
 icon=icon.png
 # experimental flag

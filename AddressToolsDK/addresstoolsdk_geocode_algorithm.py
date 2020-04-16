@@ -133,7 +133,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        self.DAWA_ADDRESS_TYPES = [("adresser", self.tr("Addresser")), ("adgangsadresser", self.tr("Adgangsadresser"))]
+        self.DAWA_ADDRESS_TYPES = [("adresser", self.tr("Adresser")), ("adgangsadresser", self.tr("Adgangsadresser"))]
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(

@@ -12,8 +12,8 @@ version=0.1
 author=Septima
 email=asger@septima.dk
 
-about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. For now there is one tool: Geocoding using DAWA. The plugin is developed and maintained by Septima.
-about[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing. Pt er der eet værktøj: Geokod adresser med DAWA. Pluginet er udviklet og vedligeholdes af Septima.
+about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. After installation of the plugin, you have to activate "Toolbox" in the "Processing"-menu. Then you can access the tools in the toolbox under the folder "Danske adresseværktøjer". For now there is one tool: Geocoding using DAWA. Read more on how to use the plugin in the help section of the tool's dialogue or at its Github repository. The plugin is developed and maintained by Septima.
+about[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing. For at bruge dette værktøj, skal du efter installation af pluginet først aktivere "Værktøjskassen" under "Processeringsmenuen". Derefter findes værktøjerne i værktøjskassen under "Danske adresseværktøjer". Pt er der eet værktøj: Geokod adresser med DAWA. Læs mere om hvordan pluginet bruges i hjælpesektion i værktøjets dialogboks, eller på dets Github repository. Pluginet er udviklet og vedligeholdes af Septima.
 
 tracker=https://github.com/Septima/qgis-addresstoolsdk/issues
 repository=https://github.com/Septima/qgis-addresstoolsdk

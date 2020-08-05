@@ -1,4 +1,8 @@
 # Danske adresser i QGIS
+## Download pluginet
+Dette plugin kan hentes fra QGIS' officielle Plugin Respository direkte fra QGIS. Søg efter 'adresse' og klik dernæst på 'Installér Plugin'
+![QGISPluginRepository](./imgs/QGISPluginRepository.png)
+
 Dette plugin til QGIS installerer en såkaldt "udbyder", der udstiller værktøjer til brug i "Processering".
 
 For at bruge et værktøj når pluginet er installeret, skal du først aktivere "Værktøjskassen" under "Processering" (engelsk: "Toolbox" under "Processing"). Derefter findes værktøjerne i værktøjskassen.
@@ -9,18 +13,37 @@ For at bruge et værktøj når pluginet er installeret, skal du først aktivere 
 Indtil videre udstiller denne provider én algoritme.
 
 ### Geokod danske adresser med DAWA
-Denne algoritme anvender DAWAs Datavask-API.
+Denne algoritme anvender <a href="https://dawa.aws.dk/">DAWAs</a> Datavask-API.
 
-Datavask-API'et gør det muligt at oversætte en ustruktureret adressetekst til en officiel, struktureret adresse med ID, også selvom adressen evt. indeholder en stavefejl eller den officielle adressebetegnelse er ændret.
 
-Datavask-API'et tager imod en adressetekst og returnerer den adresse, som bedst matcher adressen. Har anvenderen en struktueret adresse i forvejen skal anvenderen således selv sammensætte adresseteksten evt. ved brug af et udtryk. Hvis adressen står i eet felt angives dette blot under "Adresse-udtryk". Er adressen fordelt over flere felter anvendes et mere avanceret udtryk. Feks som `"Vejnavn" || ' ' || "Husnummer" || ', ' || "Postnummer" || ' ' || "By"`, der sammenstiller een tekststreng med adressen ud fra felterne `Vejnavn`, `Husnummer`, `Postnummer` og `By`.
+Med pluginet kan man oversætte en ustruktureret adressetekst til en officiel adresse fra Danmarks Adresseregister (DAR). Det håndterer stavefejl og situationer, hvor den officielle adressebetegnelse er ændret.
 
-Bemærk, at der er separate API'er til vask af **adresser** og **adgangsadresser**. Forskellen på en adresse og en adgangsadresse er at adressen rummer eventuel etage- og/eller dørbetegnelse. Det gør adgangsadressen ikke. I dropdownen "Adressetype" vælges det, om inputadresserne er "adresser" eller "adgangsadresser".
+Pluginet tager imod en adressetekst og returnerer dén adresse, som bedst matcher. Hvis adresseteksten, som skal geokodes, står i eet felt angives dette blot under "Adresse-udtryk". Fndes adresseteksten derimod i flere felter i attributtabellen, fx vejnavn i et felt, husnummer i et andet felt og postnummer i et tredje felt, så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (som du åbner ved at klikke på epsilon-ikonet).
 
-Datavask svar indeholder en angivelse af hvor sikkert svaret er, anført som en **kategori** A, B eller C. Kategori A indikerer, at der er tale om et eksakt match. Kategori B indikerer, at der ikke er tale om et helt eksakt match, men at resultatet stadig er sikkert. Kategori C angiver, at resultatet usikkert.
+Her er et eksempel, hvor adressen findes i de to felter "Vejnavn og vejnr" og "Postnummer". Funktionen Concat() bruges til at sammensætte disse to felter opdelt med et komma.
 
-En gyldig adresse kan skrives på flere forskellige måder (varianter). Man kan vælge at udelade det supplerende bynavn, man kan benytte det forkorterede "adresseringsvejnavn" i stedet for det fulde vejnavn, og man kan anvende såkaldte "stormodtagerpostnumre".
+![Udtryksbygger](./imgs/Udtryksbygger.png)
 
-Datavask anvender også historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. Endvidere håndterer datavasken også adresser hvor der er anvendt stormodtagerpostnumre.
+En gyldig adresse kan skrives på forskellige måder (varianter). Man kan fx vælge at udelade det supplerende bynavn, eller at bruge det forkortede "adresseringsvejnavn" i stedet for det fulde vejnavn.
+
+Bemærk at man skal vælge mellem vask af adresser eller adgangsadresser. Forskellen er at ’adresser’ kan indeholde en etage- og dørbetegnelse, dvs. de går helt til entrédøren. Det gør ’adgangsadresser’ (som i dag hedder ’husnumre’) ikke, de slutter altid ved gade- eller opgangsdøren. Du vælger om det skal være adresse eller adgangsadresse i dropdown ved 'Input adressetype'.
+
+Datavask svar angiver hvor sikkert svaret er, i form af en kategori A, B eller C. A indikerer eksakt match. B indikerer et ikke helt eksakt match, men at resultatet stadig er sikkert. C betyder, at resultatet usikkert. 
+
+Datavask anvender også DAR’s historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. Endvidere håndterer datavasken også adresser hvor der er anvendt såkaldte ’stormodtagerpostnumre’ fra PostNord. 
 
 ![Værktøj til geokodning](./imgs/geokod.png)
+
+Anvendelsen er demonstreret i denne film:
+LINK
+
+Du kan teste pluginet med dette demodatasæt, der indeholder adresser på en række biblioteker i København.
+
+## Fejl eller ønsker til forbedring?
+Oplever du en fejl i pluginet, så må du meget gerne oprettet en fejlbeskrivelse i pluginets <a href="https://github.com/Septima/qgis-addresstoolsdk/issues">Issuetracker</a>.
+
+Har du en idé til en forbedring, så skriv til kontakt@septima.dk eller opret dit ønske i pluginets <a href="https://github.com/Septima/qgis-addresstoolsdk/issues">Issuetracker</a>. 
+
+Septima vil med glæde tilbyde sin bistand til rettelser af fejl og forbedring.
+
+I pluginets <a href="https://github.com/Septima/qgis-addresstoolsdk/issues">Issuetracker</a> kan du også se eksistrende registreringer af idéer og bugs.

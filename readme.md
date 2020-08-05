@@ -35,9 +35,10 @@ Datavask anvender også DAR’s historiske adresser som datagrundlag, således a
 ![Værktøj til geokodning](./imgs/geokod.png)
 
 Anvendelsen er demonstreret i denne film:
-LINK
+![Demonstration](./imgs/Geokodning_med_plugin.mp4)
 
 Du kan teste pluginet med dette demodatasæt, der indeholder adresser på en række biblioteker i København.
+![Datasæt](./imgs/Biblioteker.txt)
 
 ## Fejl eller ønsker til forbedring?
 Oplever du en fejl i pluginet, så må du meget gerne oprettet en fejlbeskrivelse i pluginets <a href="https://github.com/Septima/qgis-addresstoolsdk/issues">Issuetracker</a>.

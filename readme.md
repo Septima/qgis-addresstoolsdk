@@ -18,7 +18,7 @@ Denne algoritme anvender <a href="https://dawa.aws.dk/">DAWAs</a> Datavask-API.
 
 Med pluginet kan man oversætte en ustruktureret adressetekst til en officiel adresse fra Danmarks Adresseregister (DAR). Det håndterer stavefejl og situationer, hvor den officielle adressebetegnelse er ændret.
 
-Pluginet tager imod en adressetekst og returnerer dén adresse, som bedst matcher. Hvis adresseteksten, som skal geokodes, står i eet felt angives dette blot under "Adresse-udtryk". Fndes adresseteksten derimod i flere felter i attributtabellen, fx vejnavn i et felt, husnummer i et andet felt og postnummer i et tredje felt, så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (som du åbner ved at klikke på epsilon-ikonet).
+Pluginet tager imod en adressetekst og returnerer dén adresse, som bedst matcher. Hvis adresseteksten, som skal geokodes, står i eet felt angives dette blot under "Adresse-udtryk". Findes adresseteksten derimod i flere felter i attributtabellen, fx vejnavn i et felt, husnummer i et andet felt og postnummer i et tredje felt, så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (som du åbner ved at klikke på epsilon-ikonet).
 
 Her er et eksempel, hvor adressen findes i de to felter "Vejnavn og vejnr" og "Postnummer". Funktionen Concat() bruges til at sammensætte disse to felter opdelt med et komma.
 

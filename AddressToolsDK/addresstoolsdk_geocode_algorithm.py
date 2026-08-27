@@ -30,78 +30,40 @@ __copyright__ = '(C) 2019 by Septima'
 
 __revision__ = '$Format:%H$'
 
-import json
-from qgis.PyQt.QtCore import QCoreApplication, QUrl, QVariant
-from qgis.PyQt.QtNetwork import QNetworkRequest
-from qgis.core import (Qgis,
-                       QgsProcessing,
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
+from qgis.core import (QgsProcessing,
                        QgsCoordinateReferenceSystem,
                        QgsExpression,
-                       QgsExpressionContextUtils,
                        QgsFeature, 
                        QgsGeometry, 
-                       QgsPoint, 
                        QgsField,
                        QgsFeatureSink,
-                       QgsMessageLog,
-                       QgsNetworkAccessManager,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterEnum,
                        QgsProcessingParameterExpression,
                        QgsProcessingParameterFeatureSink,
                        QgsWkbTypes)
+from .addresstoolsdk_api import AdresseVaelgerClient, ADGANGSPUNKT_CRS
 
-class DawaGeocoder():
-    DAWA_ENDPOINT = "https://dawa.aws.dk"
-    DAWA_ADDRESS_TYPES = ["adresser", "adgangsadresser"]
-
-    def __init__(self, address_type):
-        self.address_type = address_type
-
-    def wash_uri(self, address):
-        trimmed = address.strip() if address else None
-        if not trimmed:
-            return None            
-        return f"{self.DAWA_ENDPOINT}/datavask/{self.address_type}?betegnelse={trimmed}"
-
-    def address_uri(self, id):
-        return f"{self.DAWA_ENDPOINT}/{self.address_type}/{id}?medtagnedlagte=true"
-
-    def wash(self, address):
-        url = self.wash_uri(address)
-        if not url:
-            return None
-        request = QNetworkRequest(QUrl(url))
-        reply = QgsNetworkAccessManager.blockingGet(request)
-        return json.loads(str(reply.content().data(), encoding="utf-8"))
-    
-    def address_from_id(self, id):
-        url = self.address_uri(id)
-        # QgsMessageLog.logMessage(f"URL for id [{id}]: {url}",'Geokoder', Qgis.Info)
-        if not url:
-            return None
-        request = QNetworkRequest(QUrl(url))
-        reply = QgsNetworkAccessManager.blockingGet(request)
-        return json.loads(str(reply.content().data(), encoding="utf-8"))
-
-    def geocode(self, address):
-        washed = self.wash(address)
-        if not washed:
-            return None
-        cat = washed["kategori"]
-        id = washed["resultater"][0]["aktueladresse"]["id"]
-        dawa_addr = self.address_from_id(id)
-        denotation = dawa_addr["adressebetegnelse"]
-        adg_adr = dawa_addr if self.address_type == "adgangsadresser" else dawa_addr["adgangsadresse"]
-        coords = adg_adr["adgangspunkt"]["koordinater"]
-        point = QgsPoint(float(coords[0]), float(coords[1]))
-        return {
-                    "id": id, 
-                    "category": cat, 
-                    "denotation": denotation,
-                    "accesspoint": point
-                }
+# Attributes from Adressevælgerens opslag-med-id, added to the wash result in AdresseVaelgerClient.geocode().
+# Field types use QMetaType.Type (not QVariant.Type) since the latter's type enum is gone under Qt6/PyQt6.
+ENRICHED_FIELDS = [
+    ("adresse_id", QMetaType.Type.QString, 40),
+    ("adresse_betegnelse", QMetaType.Type.QString, 0),
+    ("etage", QMetaType.Type.QString, 10),
+    ("dor", QMetaType.Type.QString, 10),
+    ("adresse_status", QMetaType.Type.QString, 5),
+    ("husnummer_id", QMetaType.Type.QString, 40),
+    ("husnummertekst", QMetaType.Type.QString, 10),
+    ("adgangsadressebetegnelse", QMetaType.Type.QString, 0),
+    ("vejnavn", QMetaType.Type.QString, 0),
+    ("husnummer_status", QMetaType.Type.QString, 5),
+    ("postnr", QMetaType.Type.QString, 4),
+    ("postnummer_navn", QMetaType.Type.QString, 0),
+    ("kommunekode", QMetaType.Type.QString, 4),
+    ("vejkode", QMetaType.Type.QString, 4),
+    ("supplerende_bynavn", QMetaType.Type.QString, 0),
+]
 
 
 
@@ -123,9 +85,11 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    OUTPUT = 'OUTPUT'
+    OUTPUT_KVALITET1 = 'OUTPUT_KVALITET1'
+    OUTPUT_KVALITET2 = 'OUTPUT_KVALITET2'
+    OUTPUT_KVALITET3 = 'OUTPUT_KVALITET3'
+    OUTPUT_FEJL = 'OUTPUT_FEJL'
     INPUT = 'INPUT'
-    ADDRESS_TYPE = 'ADDRESS_TYPE'
     EXPRESSION = 'EXPRESSION'
 
     def initAlgorithm(self, config):
@@ -133,22 +97,12 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        self.DAWA_ADDRESS_TYPES = [("adresser", self.tr("Adresser")), ("adgangsadresser", self.tr("Adgangsadresser"))]
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
                 self.tr('Input adressedata'),
                 [QgsProcessing.TypeVector]
-            )
-        )
-
-        self.addParameter(
-            QgsProcessingParameterEnum(
-                self.ADDRESS_TYPE,
-                self.tr('Input adressetype'),
-                options=[x[1] for x in self.DAWA_ADDRESS_TYPES], 
-                defaultValue=0
             )
         )
 
@@ -160,13 +114,30 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
-        # We add a feature sink in which to store our processed features (this
-        # usually takes the form of a newly created vector layer when the
-        # algorithm is run in QGIS).
+        # Adressevask-svar splittes op i fire lag efter vaskestatus_kode, så resultaterne kan
+        # kvalitetsvurderes og håndteres forskelligt nedstrøms.
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT,
-                self.tr('Output lag')
+                self.OUTPUT_KVALITET1,
+                self.tr('Kvalitet 1 (kode 1000)')
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_KVALITET2,
+                self.tr('Kvalitet 2 (kode 900)')
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_KVALITET3,
+                self.tr('Kvalitet 3 (kode 700/800)')
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_FEJL,
+                self.tr('Fejl (koder < 0')
             )
         )
 
@@ -180,20 +151,29 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         # dictionary returned by the processAlgorithm function.
         source = self.parameterAsSource(parameters, self.INPUT, context)
         exp = self.parameterAsExpression(parameters, "EXPRESSION", context)
-        addr_type_ix = self.parameterAsInt(parameters, "ADDRESSTYPE", context)
-        addr_type = self.DAWA_ADDRESS_TYPES[addr_type_ix][0]
 
-
-        id_field_name = self.tr("dawa_id")
-        denote_field_name = self.tr("dawa_betegnelse")
-        cat_field_name = self.tr("dawa_kategori")
+        status_kode_field_name = self.tr("vaskestatus_kode")
+        status_tekst_field_name = self.tr("vaskestatus_tekst")
+        historisk_denote_field_name = self.tr("historisk_adressebetegnelse")
+        historisk_fra_field_name = self.tr("historisk_virkningfra")
+        historisk_til_field_name = self.tr("historisk_virkningtil")
         fields = source.fields()
-        fields.append(QgsField(id_field_name, QVariant.String, len=40))
-        fields.append(QgsField(denote_field_name, QVariant.String))
-        fields.append(QgsField(cat_field_name, QVariant.String, len=1))
+        for name, field_type, length in ENRICHED_FIELDS:
+            fields.append(QgsField(self.tr(name), field_type, len=length) if length else QgsField(self.tr(name), field_type))
+        fields.append(QgsField(status_kode_field_name, QMetaType.Type.Int))
+        fields.append(QgsField(status_tekst_field_name, QMetaType.Type.QString))
+        fields.append(QgsField(historisk_denote_field_name, QMetaType.Type.QString))
+        fields.append(QgsField(historisk_fra_field_name, QMetaType.Type.QString))
+        fields.append(QgsField(historisk_til_field_name, QMetaType.Type.QString))
         
-        (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
-                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(4326))
+        (sink_kvalitet1, dest_id_kvalitet1) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET1,
+                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
+        (sink_kvalitet2, dest_id_kvalitet2) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET2,
+                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
+        (sink_kvalitet3, dest_id_kvalitet3) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET3,
+                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
+        (sink_fejl, dest_id_fejl) = self.parameterAsSink(parameters, self.OUTPUT_FEJL,
+                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
 
         # Compute the number of steps to display within the progress bar and
         # get features from source
@@ -204,7 +184,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         expression = QgsExpression(exp)
         expression.prepare(exp_context)
 
-        geocoder = DawaGeocoder(addr_type)
+        geocoder = AdresseVaelgerClient()
 
         for current, feature in enumerate(features):
             # Stop the algorithm if cancel button has been clicked
@@ -221,14 +201,28 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
 
             # Geocode it
             geocoded = geocoder.geocode(address)
+            kode = geocoded["vaskestatus_kode"] if geocoded else None
             if geocoded:
-                out_feature.setGeometry(QgsGeometry(geocoded["accesspoint"]))
-                out_feature[id_field_name] = geocoded["id"]
-                out_feature[cat_field_name] = geocoded["category"]
-                out_feature[denote_field_name] = geocoded["denotation"]
+                out_feature[status_kode_field_name] = geocoded["vaskestatus_kode"]
+                out_feature[status_tekst_field_name] = geocoded["vaskestatus_tekst"]
+                for name, _, _ in ENRICHED_FIELDS:
+                    out_feature[self.tr(name)] = geocoded.get(name)
+                out_feature[historisk_denote_field_name] = geocoded["historisk_adressebetegnelse"]
+                out_feature[historisk_fra_field_name] = geocoded["historisk_virkningfra"]
+                out_feature[historisk_til_field_name] = geocoded["historisk_virkningtil"]
+                # accesspoint requires the (separate) opslag-med-id call to have succeeded too
+                if geocoded["accesspoint"]:
+                    out_feature.setGeometry(QgsGeometry(geocoded["accesspoint"]))
 
-            # Add a feature in the sink
-            sink.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            # Route the feature to its quality-tier sink based on vaskestatus_kode
+            if kode == 1000:
+                sink_kvalitet1.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            elif kode == 900:
+                sink_kvalitet2.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            elif kode in (700, 800):
+                sink_kvalitet3.addFeature(out_feature, QgsFeatureSink.FastInsert)
+            else:
+                sink_fejl.addFeature(out_feature, QgsFeatureSink.FastInsert)
 
             # Update the progress bar
             feedback.setProgress(int(current * total))
@@ -239,7 +233,12 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         # statistics, etc. These should all be included in the returned
         # dictionary, with keys matching the feature corresponding parameter
         # or output names.
-        return {self.OUTPUT: dest_id}
+        return {
+            self.OUTPUT_KVALITET1: dest_id_kvalitet1,
+            self.OUTPUT_KVALITET2: dest_id_kvalitet2,
+            self.OUTPUT_KVALITET3: dest_id_kvalitet3,
+            self.OUTPUT_FEJL: dest_id_fejl,
+        }
 
     def name(self):
         """
@@ -249,7 +248,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Geokod danske adresser med DAWA'
+        return 'Geokod danske adresser med Adressevask'
 
     def displayName(self):
         """
@@ -281,7 +280,9 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
     def helpString(self):
         return self.tr("""
         <p>
-            Denne algoritme er udviklet af <a href="https://www.septima.dk">Septima</a> og anvender <a href="https://dawa.aws.dk/">DAWA</a>s Datavask-API.
+            Denne algoritme er udviklet af <a href="https://www.septima.dk">Septima</a> og anvender Klimadatastyrelsens 
+            <a href="https://confluence.kds.dk/display/ADV/Adressevask">Adressevask</a>- og 
+            <a href="https://confluence.kds.dk/pages/viewpage.action?pageId=246743156">Adressevælger</a>-API'er.
         </p>
         <p>
             Med pluginet kan man oversætte en ustruktureret adressetekst til en officiel adresse fra Danmarks Adresseregister (DAR). 
@@ -293,20 +294,32 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (klik på epsilon-ikonet). 
         </p>
         <p>
+            Algoritmen vasker adressen og slår den herefter op hos Adressevælger i samme kald, så outputtet indeholder både 
+            adresse-id og den fulde mængde af adresseoplysninger (vejnavn, postnummer, kommunekode, adgangspunktets koordinater m.m.) - 
+            der er ikke brug for et separat opslagsværktøj.
+        </p>
+        <p>
             En gyldig adresse kan skrives på forskellige måder (varianter). Man kan fx vælge at udelade det supplerende bynavn, 
             eller at bruge det forkortede "adresseringsvejnavn" i stedet for det fulde vejnavn. 
         </p>
         <p>
-            Bemærk at man skal vælge mellem vask af <b>adresser</b> eller <b>adgangsadresser</b>. Forskellen er at ’adresser’ kan indeholde en etage- og dørbetegnelse, dvs. de går helt til entrédøren. 
-            Det gør ’adgangsadresser’ (som i dag hedder ’husnumre’) ikke, de slutter altid ved gade- eller opgangsdøren.
+            Adressevask svar angiver hvor sikkert svaret er, i form af en <b>vaskestatus</b>-kode og -tekst, der erstatter DAWAs gamle 
+            A/B/C-kategorier. Positive koder (fx 1000, 900, 800, 700) indikerer en eller anden grad af match, negative koder betyder 
+            at adressen ikke kunne vaskes. Vaskestatus_kode og vaskestatus_tekst sættes altid på outputtet, også når adressen ikke 
+            kunne vaskes - i så fald er de øvrige adressefelter og geometrien tomme.
         </p>
         <p>
-            Datavask svar angiver hvor sikkert svaret er, i form af en <b>kategori</b> A, B eller C. A indikerer eksakt match. 
-            B indikerer et ikke helt eksakt match, men at resultatet stadig er sikkert. C betyder, at resultatet usikkert.
+            Resultaterne fordeles på fire outputlag efter vaskestatus_kode, så de kan kvalitetsvurderes hver for sig: 
+            <b>Kvalitet 1</b> (kode 1000, eksakt match), <b>Kvalitet 2</b> (kode 900, tilnærmet vejnavn), 
+            <b>Kvalitet 3</b> (kode 700/800, interval-adresse) og <b>Fejl</b> (negativ kode, eller ingen adresse at vaske).
         </p>
         <p>
-            Datavask anvender også DAR’s historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. 
-            Endvidere håndterer datavasken også adresser hvor der er anvendt såkaldte ’stormodtagerpostnumre’ fra PostNord.
+            Adressevask anvender også DAR’s historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. 
+            Matcher adresseteksten en historisk adressebetegnelse, angives den tidligere adressebetegnelse i feltet 
+            <b>historisk_adressebetegnelse</b>, mens de øvrige felter altid indeholder adressens aktuelle betegnelse og oplysninger.
+        </p>
+        <p>
+            Koordinaterne for adgangspunktet leveres i ETRS89 / UTM zone 32N (EPSG:25832).
         </p>
         <p>
             Læs mere på <a href="https://github.com/Septima/qgis-addresstoolsdk">pluginets GitHub-side</a>, hvor du også kan se et eksempel på anvendelse.

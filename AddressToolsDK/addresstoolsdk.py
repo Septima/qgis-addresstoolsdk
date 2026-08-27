@@ -37,6 +37,7 @@ import inspect
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.core import QgsProcessingAlgorithm, QgsApplication
 from .addresstoolsdk_provider import AddressToolsDKProvider
+from .options_widget import AddressToolsDKOptionsFactory
 
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
@@ -46,8 +47,10 @@ if cmd_folder not in sys.path:
 
 class AddressToolsDKPlugin(object):
 
-    def __init__(self):
+    def __init__(self, iface):
+        self.iface = iface
         self.provider = None
+        self.options_factory = None
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -71,6 +74,9 @@ class AddressToolsDKPlugin(object):
 
     def initGui(self):
         self.initProcessing()
+        self.options_factory = AddressToolsDKOptionsFactory()
+        self.iface.registerOptionsWidgetFactory(self.options_factory)
 
     def unload(self):
         QgsApplication.processingRegistry().removeProvider(self.provider)
+        self.iface.unregisterOptionsWidgetFactory(self.options_factory)

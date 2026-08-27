@@ -12,10 +12,17 @@ import json
 from urllib.parse import quote
 from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
-from qgis.core import Qgis, QgsMessageLog, QgsNetworkAccessManager, QgsPoint
+from qgis.core import Qgis, QgsMessageLog, QgsNetworkAccessManager, QgsPoint, QgsSettings
 
 # Tag used for messages in QGIS' "Log Messages" panel (Panels > Log Messages) - select it in the tab dropdown.
 LOG_TAG = "AddressToolsDK"
+
+# QgsSettings location of the user-configurable token, set via Indstillinger > Muligheder > AddressToolsDK.
+SETTINGS_GROUP = "AddressToolsDK"
+TOKEN_SETTINGS_KEY = "adressevaelger_token"
+# Per advise of the service owner, this shared token is currently used for all purposes and works out of
+# the box - the settings page only needs to be used if/when Adressevælger starts requiring individual tokens.
+DEFAULT_TOKEN = "adressevaelger123"
 
 # Coordinate reference system used by the adgangspunkt coordinates returned by the API.
 ADGANGSPUNKT_CRS = "EPSG:25832"
@@ -53,9 +60,14 @@ def flatten_adresse(opslag):
 
 class AdresseVaelgerClient():
     BASE_URL = "https://adressevaelger.dk"
-    # TODO: this is the public demo token from the Confluence docs - replace with a real,
-    # per-customer token before release.
-    TOKEN = "adressevaelger123"
+
+    def _token(self):
+        """Returns the user-configured token from the options page, or the shared default token."""
+        settings = QgsSettings()
+        settings.beginGroup(SETTINGS_GROUP)
+        token = settings.value(TOKEN_SETTINGS_KEY, "") or ""
+        settings.endGroup()
+        return token.strip() or DEFAULT_TOKEN
 
     def _get_json(self, url):
         """GETs url and returns the parsed JSON, or None on a network error or invalid response body."""
@@ -87,10 +99,10 @@ class AdresseVaelgerClient():
         trimmed = address.strip() if address else None
         if not trimmed:
             return None
-        return f"{self.BASE_URL}/vask/?token={self.TOKEN}&adresse={quote(trimmed)}"
+        return f"{self.BASE_URL}/vask/?token={self._token()}&adresse={quote(trimmed)}"
 
     def adresse_uri(self, id):
-        return f"{self.BASE_URL}/adresser/{quote(id)}?token={self.TOKEN}"
+        return f"{self.BASE_URL}/adresser/{quote(id)}?token={self._token()}"
 
     def wash(self, address):
         """Calls Adressevask with a free-text address. Returns the parsed JSON, or None if address is empty."""

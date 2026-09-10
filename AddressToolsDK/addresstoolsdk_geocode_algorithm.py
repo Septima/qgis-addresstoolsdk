@@ -58,6 +58,7 @@ class ShowFeatureCountPostProcessor(QgsProcessingLayerPostProcessorInterface):
         if node:
             node.setCustomProperty("showFeatureCount", True)
 
+
 # Attributes from Adressevælgerens opslag-med-id, added to the wash result in AdresseVaelgerClient.geocode().
 
 ENRICHED_FIELDS = [
@@ -146,6 +147,9 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
+        # Keeps post-processor instances alive until QGIS invokes them (see below).
+        self._post_processors = []
+
         # Retrieve the feature source and sink. The 'dest_id' variable is used
         # to uniquely identify the feature sink, and must be included in the
         # dictionary returned by the processAlgorithm function.
@@ -211,6 +215,8 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
 
         # Layers with a higher sort key are placed above layers with a lower one in the
         # layer tree, so give the outputs a top-to-bottom order of 1, 2, 3, Fejl.
+        # Post-processor instances must be kept referenced here - otherwise they get
+        # garbage-collected before QGIS calls them, and postProcessLayer silently never runs.
         for dest_id, sort_key in (
             (dest_id_kvalitet1, 3),
             (dest_id_kvalitet2, 2),
@@ -220,7 +226,9 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             if context.willLoadLayerOnCompletion(dest_id):
                 details = context.layerToLoadOnCompletionDetails(dest_id)
                 details.layerSortKey = sort_key
-                details.setPostProcessor(ShowFeatureCountPostProcessor())
+                post_processor = ShowFeatureCountPostProcessor()
+                self._post_processors.append(post_processor)
+                details.setPostProcessor(post_processor)
 
         # Compute the number of steps to display within the progress bar and
         # get features from source

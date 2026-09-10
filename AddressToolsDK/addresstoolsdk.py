@@ -22,19 +22,25 @@
  ***************************************************************************/
 """
 
-__author__ = 'Septima'
-__date__ = '2019-09-06'
-__copyright__ = '(C) 2019 by Septima'
+__author__ = "Septima"
+__date__ = "2019-09-06"
+__copyright__ = "(C) 2019 by Septima"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import os
 import sys
 import inspect
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from qgis.PyQt.QtCore import (
+    QSettings,
+    QTranslator,
+    qVersion,
+    QCoreApplication,
+    Qt,
+)
 from qgis.core import QgsProcessingAlgorithm, QgsApplication
 from .addresstoolsdk_provider import AddressToolsDKProvider
 from .options_widget import AddressToolsDKOptionsFactory
@@ -56,15 +62,14 @@ class AddressToolsDKPlugin(object):
         self.plugin_dir = os.path.dirname(__file__)
 
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            '{}.qm'.format(locale))
+            self.plugin_dir, "i18n", "{}.qm".format(locale)
+        )
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-            if qVersion() > '4.3.3':
+            if qVersion() > "4.3.3":
                 QCoreApplication.installTranslator(self.translator)
 
     def initProcessing(self):

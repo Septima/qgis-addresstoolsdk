@@ -11,8 +11,14 @@ Adressevælger (opslag med ID): https://confluence.kds.dk/pages/viewpage.action?
 import json
 from urllib.parse import quote
 from qgis.PyQt.QtCore import QUrl
-from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
-from qgis.core import Qgis, QgsMessageLog, QgsNetworkAccessManager, QgsPoint, QgsSettings
+from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.core import (
+    Qgis,
+    QgsMessageLog,
+    QgsNetworkAccessManager,
+    QgsPoint,
+    QgsSettings,
+)
 
 # Tag used for messages in QGIS' "Log Messages" panel (Panels > Log Messages) - select it in the tab dropdown.
 LOG_TAG = "AddressToolsDK"
@@ -54,11 +60,11 @@ def flatten_adresse(opslag):
         "kommunekode": kommunedel.get("kommune"),
         "vejkode": kommunedel.get("vejkode"),
         "supplerende_bynavn": supplerende.get("navn"),
-        "accesspoint": point
+        "accesspoint": point,
     }
 
 
-class AdresseVaelgerClient():
+class AdresseVaelgerClient:
     BASE_URL = "https://adressevaelger.dk"
 
     def _token(self):
@@ -74,24 +80,32 @@ class AdresseVaelgerClient():
         QgsMessageLog.logMessage(f"Kalder: {url}", LOG_TAG, Qgis.Info)
         request = QNetworkRequest(QUrl(url))
         reply = QgsNetworkAccessManager.blockingGet(request)
-        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        status = reply.attribute(
+            QNetworkRequest.Attribute.HttpStatusCodeAttribute
+        )
         raw = bytes(reply.content())
-        if reply.error() != QNetworkReply.NetworkError.NoError:
+        # PyQt5 reply.error() returns an int, PyQt6 returns a NetworkError enum instance.
+        error = reply.error()
+        error_code = error.value if hasattr(error, "value") else error
+        if error_code != 0:
             QgsMessageLog.logMessage(
                 f"Netværksfejl ved kald til {url}: {reply.errorString()} (HTTP {status})",
-                LOG_TAG, Qgis.Warning
+                LOG_TAG,
+                Qgis.Warning,
             )
             return None
         QgsMessageLog.logMessage(
             f"Svar fra {url} (HTTP {status}, {len(raw)} bytes): {raw[:500]!r}",
-            LOG_TAG, Qgis.Info
+            LOG_TAG,
+            Qgis.Info,
         )
         try:
             return json.loads(str(raw, encoding="utf-8"))
         except json.JSONDecodeError:
             QgsMessageLog.logMessage(
                 f"Kunne ikke parse JSON-svar fra {url} (HTTP {status})",
-                LOG_TAG, Qgis.Critical
+                LOG_TAG,
+                Qgis.Critical,
             )
             return None
 
@@ -157,8 +171,9 @@ class AdresseVaelgerClient():
             return result
         result.update(flatten_adresse(opslag))
         historisk = washed.get("vaskeresultat_historisk") or {}
-        result["historisk_adressebetegnelse"] = historisk.get("adressebetegnelse")
+        result["historisk_adressebetegnelse"] = historisk.get(
+            "adressebetegnelse"
+        )
         result["historisk_virkningfra"] = historisk.get("virkningfra")
         result["historisk_virkningtil"] = historisk.get("virkningtil")
         return result
-

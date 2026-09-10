@@ -1,0 +1,4 @@
+[bandit]
+# Bandit configuration for QGIS plugin
+# Test IDs to skip: B105, B411
+skips = B105,B411

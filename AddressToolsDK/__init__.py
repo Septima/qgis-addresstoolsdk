@@ -22,9 +22,9 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
-__author__ = 'Septima'
-__date__ = '2019-09-06'
-__copyright__ = '(C) 2019 by Septima'
+__author__ = "Septima"
+__date__ = "2019-09-06"
+__copyright__ = "(C) 2019 by Septima"
 
 
 # noinspection PyPep8Naming
@@ -36,4 +36,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .addresstoolsdk import AddressToolsDKPlugin
+
     return AddressToolsDKPlugin(iface)

@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-__author__ = 'Septima'
-__date__ = '2019-09-06'
-__copyright__ = '(C) 2019 by Septima'
+__author__ = "Septima"
+__date__ = "2019-09-06"
+__copyright__ = "(C) 2019 by Septima"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 from qgis.core import QgsProcessingProvider
 from .addresstoolsdk_geocode_algorithm import DkGeokoderAlgorithm
@@ -63,7 +63,7 @@ class AddressToolsDKProvider(QgsProcessingProvider):
         string should be a unique, short, character only string, eg "qgis" or
         "gdal". This string should not be localised.
         """
-        return 'addresstoolsdk'
+        return "addresstoolsdk"
 
     def name(self):
         """
@@ -72,7 +72,7 @@ class AddressToolsDKProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('Danske adresseværktøjer')
+        return self.tr("Danske adresseværktøjer")
 
     def icon(self):
         """

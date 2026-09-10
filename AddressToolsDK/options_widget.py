@@ -11,7 +11,11 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QLineEdit, QToolButton
 from qgis.core import QgsSettings
 from qgis.gui import QgsOptionsPageWidget, QgsOptionsWidgetFactory
-from .addresstoolsdk_api import DEFAULT_TOKEN, SETTINGS_GROUP, TOKEN_SETTINGS_KEY
+from .addresstoolsdk_api import (
+    DEFAULT_TOKEN,
+    SETTINGS_GROUP,
+    TOKEN_SETTINGS_KEY,
+)
 
 FORM_CLASS, _ = uic.loadUiType(
     os.path.join(os.path.dirname(__file__), "ui", "options_widget.ui")
@@ -38,7 +42,9 @@ class AddressToolsDKOptionsWidget(QgsOptionsPageWidget, FORM_CLASS):
         btn.setFixedWidth(28)
         btn.toggled.connect(
             lambda checked: self.tokenInput.setEchoMode(
-                QLineEdit.EchoMode.Normal if checked else QLineEdit.EchoMode.Password
+                QLineEdit.EchoMode.Normal
+                if checked
+                else QLineEdit.EchoMode.Password
             )
         )
         self.gridLayout.addWidget(btn, 0, 3)
@@ -47,7 +53,9 @@ class AddressToolsDKOptionsWidget(QgsOptionsPageWidget, FORM_CLASS):
         """Load the token from QgsSettings, pre-filled with the shared default token if not yet set."""
         settings = QgsSettings()
         settings.beginGroup(SETTINGS_GROUP)
-        self.tokenInput.setText(settings.value(TOKEN_SETTINGS_KEY, DEFAULT_TOKEN))
+        self.tokenInput.setText(
+            settings.value(TOKEN_SETTINGS_KEY, DEFAULT_TOKEN)
+        )
         settings.endGroup()
 
     def apply(self):
@@ -74,4 +82,3 @@ class AddressToolsDKOptionsFactory(QgsOptionsWidgetFactory):
 
     def title(self):
         return "AddressToolsDK"
-

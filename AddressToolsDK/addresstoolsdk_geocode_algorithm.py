@@ -22,28 +22,41 @@
  ***************************************************************************/
 """
 
-__author__ = 'Septima'
-__date__ = '2019-09-06'
-__copyright__ = '(C) 2019 by Septima'
+__author__ = "Septima"
+__date__ = "2019-09-06"
+__copyright__ = "(C) 2019 by Septima"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from qgis.core import (QgsProcessing,
-                       QgsCoordinateReferenceSystem,
-                       QgsExpression,
-                       QgsFeature, 
-                       QgsGeometry, 
-                       QgsField,
-                       QgsFeatureSink,
-                       QgsProcessingAlgorithm,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterExpression,
-                       QgsProcessingParameterFeatureSink,
-                       QgsWkbTypes)
+from qgis.core import (
+    QgsProcessing,
+    QgsCoordinateReferenceSystem,
+    QgsExpression,
+    QgsFeature,
+    QgsGeometry,
+    QgsField,
+    QgsFeatureSink,
+    QgsProcessingAlgorithm,
+    QgsProcessingLayerPostProcessorInterface,
+    QgsProcessingParameterFeatureSource,
+    QgsProcessingParameterExpression,
+    QgsProcessingParameterFeatureSink,
+    QgsProject,
+    QgsWkbTypes,
+)
 from .addresstoolsdk_api import AdresseVaelgerClient, ADGANGSPUNKT_CRS
+
+
+class ShowFeatureCountPostProcessor(QgsProcessingLayerPostProcessorInterface):
+    """Turns on the layer tree's "Show Feature Count" option for the loaded output layer."""
+
+    def postProcessLayer(self, layer, context, feedback):
+        node = QgsProject.instance().layerTreeRoot().findLayer(layer.id())
+        if node:
+            node.setCustomProperty("showFeatureCount", True)
 
 # Attributes from Adressevælgerens opslag-med-id, added to the wash result in AdresseVaelgerClient.geocode().
 
@@ -66,7 +79,6 @@ ENRICHED_FIELDS = [
 ]
 
 
-
 class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
     """
     Geocodes a free-text address field/expression via Adressevask, enriches the match with the full
@@ -77,12 +89,12 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    OUTPUT_KVALITET1 = 'OUTPUT_KVALITET1'
-    OUTPUT_KVALITET2 = 'OUTPUT_KVALITET2'
-    OUTPUT_KVALITET3 = 'OUTPUT_KVALITET3'
-    OUTPUT_FEJL = 'OUTPUT_FEJL'
-    INPUT = 'INPUT'
-    EXPRESSION = 'EXPRESSION'
+    OUTPUT_KVALITET1 = "OUTPUT_KVALITET1"
+    OUTPUT_KVALITET2 = "OUTPUT_KVALITET2"
+    OUTPUT_KVALITET3 = "OUTPUT_KVALITET3"
+    OUTPUT_FEJL = "OUTPUT_FEJL"
+    INPUT = "INPUT"
+    EXPRESSION = "EXPRESSION"
 
     def initAlgorithm(self, config):
         """
@@ -93,16 +105,16 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
-                self.tr('Input adressedata'),
-                [QgsProcessing.TypeVector]
+                self.tr("Input adressedata"),
+                [QgsProcessing.TypeVector],
             )
         )
 
         self.addParameter(
             QgsProcessingParameterExpression(
                 self.EXPRESSION,
-                self.tr('Adresse-udtryk'),
-                parentLayerParameterName = self.INPUT
+                self.tr("Adresse-udtryk"),
+                parentLayerParameterName=self.INPUT,
             )
         )
 
@@ -110,26 +122,22 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         # kvalitetsvurderes og håndteres forskelligt nedstrøms.
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_KVALITET1,
-                self.tr('Kvalitet 1 (kode 1000)')
+                self.OUTPUT_KVALITET1, self.tr("Kvalitet 1 (kode 1000)")
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_KVALITET2,
-                self.tr('Kvalitet 2 (kode 900)')
+                self.OUTPUT_KVALITET2, self.tr("Kvalitet 2 (kode 900)")
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_KVALITET3,
-                self.tr('Kvalitet 3 (kode 700/800)')
+                self.OUTPUT_KVALITET3, self.tr("Kvalitet 3 (kode 700/800)")
             )
         )
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_FEJL,
-                self.tr('Fejl (koder < 0)')
+                self.OUTPUT_FEJL, self.tr("Fejl (koder < 0)")
             )
         )
 
@@ -151,21 +159,68 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         historisk_til_field_name = self.tr("historisk_virkningtil")
         fields = source.fields()
         for name, field_type, length in ENRICHED_FIELDS:
-            fields.append(QgsField(self.tr(name), field_type, len=length) if length else QgsField(self.tr(name), field_type))
+            fields.append(
+                QgsField(self.tr(name), field_type, len=length)
+                if length
+                else QgsField(self.tr(name), field_type)
+            )
         fields.append(QgsField(status_kode_field_name, QMetaType.Type.Int))
         fields.append(QgsField(status_tekst_field_name, QMetaType.Type.QString))
-        fields.append(QgsField(historisk_denote_field_name, QMetaType.Type.QString))
-        fields.append(QgsField(historisk_fra_field_name, QMetaType.Type.QString))
-        fields.append(QgsField(historisk_til_field_name, QMetaType.Type.QString))
-        
-        (sink_kvalitet1, dest_id_kvalitet1) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET1,
-                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
-        (sink_kvalitet2, dest_id_kvalitet2) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET2,
-                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
-        (sink_kvalitet3, dest_id_kvalitet3) = self.parameterAsSink(parameters, self.OUTPUT_KVALITET3,
-                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
-        (sink_fejl, dest_id_fejl) = self.parameterAsSink(parameters, self.OUTPUT_FEJL,
-                context, fields, QgsWkbTypes.Point, QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS))
+        fields.append(
+            QgsField(historisk_denote_field_name, QMetaType.Type.QString)
+        )
+        fields.append(
+            QgsField(historisk_fra_field_name, QMetaType.Type.QString)
+        )
+        fields.append(
+            QgsField(historisk_til_field_name, QMetaType.Type.QString)
+        )
+
+        sink_kvalitet1, dest_id_kvalitet1 = self.parameterAsSink(
+            parameters,
+            self.OUTPUT_KVALITET1,
+            context,
+            fields,
+            QgsWkbTypes.Point,
+            QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
+        )
+        sink_kvalitet2, dest_id_kvalitet2 = self.parameterAsSink(
+            parameters,
+            self.OUTPUT_KVALITET2,
+            context,
+            fields,
+            QgsWkbTypes.Point,
+            QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
+        )
+        sink_kvalitet3, dest_id_kvalitet3 = self.parameterAsSink(
+            parameters,
+            self.OUTPUT_KVALITET3,
+            context,
+            fields,
+            QgsWkbTypes.Point,
+            QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
+        )
+        sink_fejl, dest_id_fejl = self.parameterAsSink(
+            parameters,
+            self.OUTPUT_FEJL,
+            context,
+            fields,
+            QgsWkbTypes.Point,
+            QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
+        )
+
+        # Layers with a higher sort key are placed above layers with a lower one in the
+        # layer tree, so give the outputs a top-to-bottom order of 1, 2, 3, Fejl.
+        for dest_id, sort_key in (
+            (dest_id_kvalitet1, 3),
+            (dest_id_kvalitet2, 2),
+            (dest_id_kvalitet3, 1),
+            (dest_id_fejl, 0),
+        ):
+            if context.willLoadLayerOnCompletion(dest_id):
+                details = context.layerToLoadOnCompletionDetails(dest_id)
+                details.layerSortKey = sort_key
+                details.setPostProcessor(ShowFeatureCountPostProcessor())
 
         # Compute the number of steps to display within the progress bar and
         # get features from source
@@ -186,8 +241,8 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             out_feature = QgsFeature(fields)
             for field in source.fields():
                 out_feature[field.name()] = feature[field.name()]
-            
-            # Get address string    
+
+            # Get address string
             exp_context.setFeature(feature)
             address = expression.evaluate(exp_context)
 
@@ -195,24 +250,42 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             geocoded = geocoder.geocode(address)
             kode = geocoded["vaskestatus_kode"] if geocoded else None
             if geocoded:
-                out_feature[status_kode_field_name] = geocoded["vaskestatus_kode"]
-                out_feature[status_tekst_field_name] = geocoded["vaskestatus_tekst"]
+                out_feature[status_kode_field_name] = geocoded[
+                    "vaskestatus_kode"
+                ]
+                out_feature[status_tekst_field_name] = geocoded[
+                    "vaskestatus_tekst"
+                ]
                 for name, _, _ in ENRICHED_FIELDS:
                     out_feature[self.tr(name)] = geocoded.get(name)
-                out_feature[historisk_denote_field_name] = geocoded["historisk_adressebetegnelse"]
-                out_feature[historisk_fra_field_name] = geocoded["historisk_virkningfra"]
-                out_feature[historisk_til_field_name] = geocoded["historisk_virkningtil"]
+                out_feature[historisk_denote_field_name] = geocoded[
+                    "historisk_adressebetegnelse"
+                ]
+                out_feature[historisk_fra_field_name] = geocoded[
+                    "historisk_virkningfra"
+                ]
+                out_feature[historisk_til_field_name] = geocoded[
+                    "historisk_virkningtil"
+                ]
                 # accesspoint requires the (separate) opslag-med-id call to have succeeded too
                 if geocoded["accesspoint"]:
-                    out_feature.setGeometry(QgsGeometry(geocoded["accesspoint"]))
+                    out_feature.setGeometry(
+                        QgsGeometry(geocoded["accesspoint"])
+                    )
 
             # Route the feature to its quality-tier sink based on vaskestatus_kode
             if kode == 1000:
-                sink_kvalitet1.addFeature(out_feature, QgsFeatureSink.FastInsert)
+                sink_kvalitet1.addFeature(
+                    out_feature, QgsFeatureSink.FastInsert
+                )
             elif kode == 900:
-                sink_kvalitet2.addFeature(out_feature, QgsFeatureSink.FastInsert)
+                sink_kvalitet2.addFeature(
+                    out_feature, QgsFeatureSink.FastInsert
+                )
             elif kode in (700, 800):
-                sink_kvalitet3.addFeature(out_feature, QgsFeatureSink.FastInsert)
+                sink_kvalitet3.addFeature(
+                    out_feature, QgsFeatureSink.FastInsert
+                )
             else:
                 sink_fejl.addFeature(out_feature, QgsFeatureSink.FastInsert)
 
@@ -240,7 +313,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Geokod danske adresser med Adressevask'
+        return "Geokod danske adresser med Adressevask"
 
     def displayName(self):
         """
@@ -264,7 +337,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Geokodning'
+        return "Geokodning"
 
     def shortDescription(self):
         return self.helpString()
@@ -319,7 +392,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         """)
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
+        return QCoreApplication.translate("Processing", string)
 
     def createInstance(self):
         return DkGeokoderAlgorithm()

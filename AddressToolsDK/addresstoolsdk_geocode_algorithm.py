@@ -46,7 +46,7 @@ from qgis.core import (QgsProcessing,
 from .addresstoolsdk_api import AdresseVaelgerClient, ADGANGSPUNKT_CRS
 
 # Attributes from Adressevælgerens opslag-med-id, added to the wash result in AdresseVaelgerClient.geocode().
-# Field types use QMetaType.Type (not QVariant.Type) since the latter's type enum is gone under Qt6/PyQt6.
+
 ENRICHED_FIELDS = [
     ("adresse_id", QMetaType.Type.QString, 40),
     ("adresse_betegnelse", QMetaType.Type.QString, 0),
@@ -129,7 +129,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_FEJL,
-                self.tr('Fejl (koder < 0')
+                self.tr('Fejl (koder < 0)')
             )
         )
 

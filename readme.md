@@ -13,11 +13,12 @@ For at bruge et værktøj når pluginet er installeret, skal du først aktivere 
 Denne provider udstiller én algoritme.
 
 ### Geokod danske adresser med Adressevask
-Denne algoritme anvender Klimadatastyrelsens <a href="https://confluence.kds.dk/display/ADV/Adressevask">Adressevask</a>- og <a href="https://confluence.kds.dk/pages/viewpage.action?pageId=246743156">Adressevælger</a>-API'er.
 
+Dette plugin er udviklet af <a href="https://septima.dk">Septima</a>, og anvender Klimadatastyrelsens <a href="https://confluence.kds.dk/display/ADV/Adressevask">Adressevask</a> og <a href="https://confluence.kds.dk/pages/viewpage.action?pageId=246743156">Adressevælger</a> API'er 
 
-Med pluginet kan man oversætte en ustruktureret adressetekst til en officiel adresse fra Danmarks Adresseregister (DAR). Det håndterer stavefejl og situationer, hvor den officielle adressebetegnelse er ændret.
+Adressevask API'et kan kun vaske adresser, det er således ikke muligt at benytte husnumre som input, og der returneres heller ikke husnumre som resultater.
 
+Pluginet oversætter en adressetekst til den officielle adresse i Danmarks Adresseregister (DAR). Det kan blandt andet håndtere stavefejl og adressetekster, hvor den officielle adressebetegnelse siden er blevet ændret.
 Pluginet tager imod en adressetekst og returnerer dén adresse, som bedst matcher. Hvis adresseteksten, som skal geokodes, står i eet felt angives dette blot under "Adresse-udtryk". Findes adresseteksten derimod i flere felter i attributtabellen, fx vejnavn i et felt, husnummer i et andet felt og postnummer i et tredje felt, så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (som du åbner ved at klikke på epsilon-ikonet).
 
 Her er et eksempel, hvor adressen findes i de to felter "Vejnavn og vejnr" og "Postnummer". Funktionen Concat() bruges til at sammensætte disse to felter opdelt med et komma.

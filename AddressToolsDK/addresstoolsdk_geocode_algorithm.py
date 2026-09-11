@@ -353,47 +353,53 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
     def helpString(self):
         return self.tr("""
         <p>
-            Denne algoritme er udviklet af <a href="https://www.septima.dk">Septima</a> og anvender Klimadatastyrelsens 
+            Dette plugin er udviklet af <a href="https://www.septima.dk">Septima</a> og anvender Klimadatastyrelsens 
             <a href="https://confluence.kds.dk/display/ADV/Adressevask">Adressevask</a>- og 
             <a href="https://confluence.kds.dk/pages/viewpage.action?pageId=246743156">Adressevælger</a>-API'er.
         </p>
         <p>
-            Med pluginet kan man oversætte en ustruktureret adressetekst til en officiel adresse fra Danmarks Adresseregister (DAR). 
+            Pluginet gør det muligt at arbejde med officielle adresser i DAR direkte fra QGIS. 
+            Adressevask API'et kan kun vaske adresser, det er således ikke muligt at benytte husnumre som input, og der returneres heller ikke husnumre som resultater.
+        </p>
+
+        <p>
+            Pluginet oversætter en adressetekst til den officielle adresse i Danmarks Adresseregister (DAR).. 
             Det håndterer stavefejl og situationer, hvor den officielle adressebetegnelse er ændret.
         </p>
+        <h3>Adressetekster</h3>
         <p>
-            Pluginet tager imod en adressetekst og returnerer dén adresse, som bedst matcher. Hvis adresseteksten, som skal geokodes, 
-            findes i flere felter i attributtabellen (fx vejnavn i et felt, husnummer i et andet felt og postnummer i et tredje felt), 
-            så skal disse sættes sammen til et samlet adresseudtryk vha. udtryksbyggeren (klik på epsilon-ikonet). 
+            Pluginet tager en adressetekst som input og returnerer den adresse, der bedst matcher. Hvis adressen er fordelt på flere felter i attributtabellen – fx vejnavn, husnummer og postnummer – kan felterne sættes sammen til ét samlet adresseudtryk ved hjælp af udtryksbyggeren (klik på epsilon-ikonet).
+            En gyldig adresse kan skrives på flere forskellige måder. Eksempelvis kan det supplerende bynavn udelades, eller det forkortede adresseringsvejnavn kan anvendes i stedet for det fulde vejnavn.    
         </p>
+
+        <h3>Adressevaskede og geokodede resultater</h3>
+
         <p>
-            Algoritmen vasker adressen og slår den herefter op hos Adressevælger i samme kald, så outputtet indeholder både 
-            adresse-id og den fulde mængde af adresseoplysninger (vejnavn, postnummer, kommunekode, adgangspunktets koordinater m.m.) - 
-            der er ikke brug for et separat opslagsværktøj.
+            Resultatet når pluginet køres er fire lag med de adressevaskede og geokodede resultater. Hvert lag indeholder de oprindelige felter, samt en række felter med resultater fra adressevasken og geokodningen.
+            Adgangspunktets koordinater leveres i ETRS89 / UTM zone 32N (EPSG:25832).   
         </p>
+
+        <h3>Kvalitetsvurdering af den vaskede adresse</h3>
         <p>
-            En gyldig adresse kan skrives på forskellige måder (varianter). Man kan fx vælge at udelade det supplerende bynavn, 
-            eller at bruge det forkortede "adresseringsvejnavn" i stedet for det fulde vejnavn. 
+            Adressevaskens svar angiver, hvor sikkert adressen er matchet, ved hjælp af en vaskestatus-kode og -tekst, som erstatter DAWA's tidligere A/B/C-kategorier. Positive koder angiver forskellige grader af match, fx 1000, 900, 800 og 700, mens negative koder betyder, at adressen ikke kunne vaskes.
+            Vaskestatus_kode og vaskestatus_tekst tilføjes altid til outputtet – også når adressen ikke kunne vaskes. I disse tilfælde er de øvrige adressefelter og geometrien tomme.
+            Resultaterne fordeles på fire outputlag efter vaskestatus_kode, så de forskellige match kan kvalitetsvurderes separat:
+
+            <ol>
+                <li>Kvalitet 1: kode 1000 – eksakt match</li>
+                <li>Kvalitet 2: kode 900 – tilnærmet vejnavn</li>
+                <li>Kvalitet 3: kode 700/800 – interval-adresse</li>
+                <li>Fejl: negativ kode eller ingen adresse at vaske</li>
+            </ol> 
+
         </p>
+
+        <h3>Historiske adresser</h3>
         <p>
-            Adressevask svar angiver hvor sikkert svaret er, i form af en <b>vaskestatus</b>-kode og -tekst, der erstatter DAWAs gamle 
-            A/B/C-kategorier. Positive koder (fx 1000, 900, 800, 700) indikerer en eller anden grad af match, negative koder betyder 
-            at adressen ikke kunne vaskes. Vaskestatus_kode og vaskestatus_tekst sættes altid på outputtet, også når adressen ikke 
-            kunne vaskes - i så fald er de øvrige adressefelter og geometrien tomme.
+            Adressevask anvender også DAR's historiske adresser som datagrundlag. Det betyder, at adressetekster med tidligere adressebetegnelser også kan matches.
+            Hvis adresseteksten matcher en historisk adressebetegnelse, angives den tidligere betegnelse i feltet historisk_adressebetegnelse. De øvrige adressefelter indeholder altid den aktuelle adressebetegnelse og de aktuelle adresseoplysninger.
         </p>
-        <p>
-            Resultaterne fordeles på fire outputlag efter vaskestatus_kode, så de kan kvalitetsvurderes hver for sig: 
-            <b>Kvalitet 1</b> (kode 1000, eksakt match), <b>Kvalitet 2</b> (kode 900, tilnærmet vejnavn), 
-            <b>Kvalitet 3</b> (kode 700/800, interval-adresse) og <b>Fejl</b> (negativ kode, eller ingen adresse at vaske).
-        </p>
-        <p>
-            Adressevask anvender også DAR’s historiske adresser som datagrundlag, således at adresser som er ændret også kan vaskes. 
-            Matcher adresseteksten en historisk adressebetegnelse, angives den tidligere adressebetegnelse i feltet 
-            <b>historisk_adressebetegnelse</b>, mens de øvrige felter altid indeholder adressens aktuelle betegnelse og oplysninger.
-        </p>
-        <p>
-            Koordinaterne for adgangspunktet leveres i ETRS89 / UTM zone 32N (EPSG:25832).
-        </p>
+
         <p>
             Læs mere på <a href="https://github.com/Septima/qgis-addresstoolsdk">pluginets GitHub-side</a>, hvor du også kan se et eksempel på anvendelse.
         </p>

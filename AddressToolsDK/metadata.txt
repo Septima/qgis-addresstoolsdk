@@ -12,7 +12,7 @@ version=0.3.0
 author=Septima
 email=asger@septima.dk
 
-about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. After installation of the plugin, you have to activate "Toolbox" in the "Processing"-menu. Then you can access the tools in the toolbox under the folder "Danske adresseværktøjer". For now there is one tool: Geocoding using Adressevask and Adressevælger. Read more on how to use the plugin in the help section of the tool's dialogue or at its Github repository. The plugin is developed and maintained by Septima.
+about=This plugin provides tools to work with Danish addresses within the QGIS processing framework. After installing the plugin, make sure the “Processing Toolbox” is enabled from the Processing menu. The tools are available in the Danske adresseværktøjer folder in the Processing Toolbox. Currently, the plugin provides one tool: “Geokod danske adresser med Adressevask”. This tool is used to clean and geocode a layer containing Danish addresses. For instructions on how to use the tool, see the Help section in the tool's dialog or visit the plugin's GitHub repository. The plugin is developed and maintained by Septima.
 about[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing. For at bruge dette værktøj, skal du efter installation af pluginet først aktivere "Værktøjskassen" under "Processeringsmenuen". Derefter findes værktøjerne i værktøjskassen under "Danske adresseværktøjer". Pt er der eet værktøj: Geokod adresser med Adressevask og Adressevælger. Læs mere om hvordan pluginet bruges i hjælpesektion i værktøjets dialogboks, eller på dets Github repository. Pluginet er udviklet og vedligeholdes af Septima.
 
 tracker=https://github.com/Septima/qgis-addresstoolsdk/issues
@@ -23,7 +23,7 @@ repository=https://github.com/Septima/qgis-addresstoolsdk
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog=Version 0.2: Replaced DAWA with Klimadatastyrelsens Adressevask/Adressevælger APIs. The geocode algorithm now washes the address and looks it up with Adressevælger in one call, returning the full enriched address attribute set plus vaskestatus (replacing the old A/B/C kategori)
+changelog=Version 0.2: Replaced DAWA with Klimadatastyrelsens Adressevask/Adressevælger APIs. The geocode algorithm now washes the address and looks it up with Adressevælger in one call, returning the full enriched address attribute set plus vaskestatus (replacing the old A/B/C kategori). Funded by den danske QGIS Brugergruppe
   Version 0.1: Initial version with one algorithm "Geokod danske adresser med DAWA"
 
 

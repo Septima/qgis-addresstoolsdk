@@ -363,10 +363,10 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
         </p>
 
         <p>
-            Pluginet oversætter en adressetekst til den officielle adresse i Danmarks Adresseregister (DAR).. 
+            Pluginet oversætter en adressetekst til den officielle adresse i Danmarks Adresseregister (DAR). 
             Det håndterer stavefejl og situationer, hvor den officielle adressebetegnelse er ændret.
         </p>
-        <h3>Adressetekster</h3>
+        <h3>Adresse-udtryk</h3>
         <p>
             Pluginet tager en adressetekst som input og returnerer den adresse, der bedst matcher. Hvis adressen er fordelt på flere felter i attributtabellen – fx vejnavn, husnummer og postnummer – kan felterne sættes sammen til ét samlet adresseudtryk ved hjælp af udtryksbyggeren (klik på epsilon-ikonet).
             En gyldig adresse kan skrives på flere forskellige måder. Eksempelvis kan det supplerende bynavn udelades, eller det forkortede adresseringsvejnavn kan anvendes i stedet for det fulde vejnavn.    

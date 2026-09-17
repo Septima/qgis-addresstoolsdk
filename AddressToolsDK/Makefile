@@ -1,7 +1,7 @@
 #/***************************************************************************
 # DkGeokoder
 #
-# This plugin uses DAWA to geocode Danish addresses with QGIS processing framework
+# This plugin uses Adressevask/Adressevælger to geocode Danish addresses with QGIS processing framework
 #							 -------------------
 #		begin				: 2019-09-06
 #		git sha				: $Format:%H$

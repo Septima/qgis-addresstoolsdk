@@ -22,21 +22,28 @@
  ***************************************************************************/
 """
 
-__author__ = 'Septima'
-__date__ = '2019-09-06'
-__copyright__ = '(C) 2019 by Septima'
+__author__ = "Septima"
+__date__ = "2019-09-06"
+__copyright__ = "(C) 2019 by Septima"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import os
 import sys
 import inspect
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from qgis.PyQt.QtCore import (
+    QSettings,
+    QTranslator,
+    qVersion,
+    QCoreApplication,
+    Qt,
+)
 from qgis.core import QgsProcessingAlgorithm, QgsApplication
 from .addresstoolsdk_provider import AddressToolsDKProvider
+from .options_widget import AddressToolsDKOptionsFactory
 
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
@@ -46,22 +53,23 @@ if cmd_folder not in sys.path:
 
 class AddressToolsDKPlugin(object):
 
-    def __init__(self):
+    def __init__(self, iface):
+        self.iface = iface
         self.provider = None
+        self.options_factory = None
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            '{}.qm'.format(locale))
+            self.plugin_dir, "i18n", "{}.qm".format(locale)
+        )
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-            if qVersion() > '4.3.3':
+            if qVersion() > "4.3.3":
                 QCoreApplication.installTranslator(self.translator)
 
     def initProcessing(self):
@@ -71,6 +79,9 @@ class AddressToolsDKPlugin(object):
 
     def initGui(self):
         self.initProcessing()
+        self.options_factory = AddressToolsDKOptionsFactory()
+        self.iface.registerOptionsWidgetFactory(self.options_factory)
 
     def unload(self):
         QgsApplication.processingRegistry().removeProvider(self.provider)
+        self.iface.unregisterOptionsWidgetFactory(self.options_factory)

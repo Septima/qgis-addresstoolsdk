@@ -77,7 +77,7 @@ class AdresseVaelgerClient:
 
     def _get_json(self, url):
         """GETs url and returns the parsed JSON, or None on a network error or invalid response body."""
-        QgsMessageLog.logMessage(f"Kalder: {url}", LOG_TAG, Qgis.Info)
+        QgsMessageLog.logMessage(f"Kalder: {url}", LOG_TAG, Qgis.MessageLevel.Info)
         request = QNetworkRequest(QUrl(url))
         reply = QgsNetworkAccessManager.blockingGet(request)
         status = reply.attribute(
@@ -91,13 +91,13 @@ class AdresseVaelgerClient:
             QgsMessageLog.logMessage(
                 f"Netværksfejl ved kald til {url}: {reply.errorString()} (HTTP {status})",
                 LOG_TAG,
-                Qgis.Warning,
+                Qgis.MessageLevel.Warning,
             )
             return None
         QgsMessageLog.logMessage(
             f"Svar fra {url} (HTTP {status}, {len(raw)} bytes): {raw[:500]!r}",
             LOG_TAG,
-            Qgis.Info,
+            Qgis.MessageLevel.Info,
         )
         try:
             return json.loads(str(raw, encoding="utf-8"))
@@ -105,7 +105,7 @@ class AdresseVaelgerClient:
             QgsMessageLog.logMessage(
                 f"Kunne ikke parse JSON-svar fra {url} (HTTP {status})",
                 LOG_TAG,
-                Qgis.Critical,
+                Qgis.MessageLevel.Critical,
             )
             return None
 

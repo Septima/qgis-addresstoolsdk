@@ -107,7 +107,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.INPUT,
                 self.tr("Input adressedata"),
-                [QgsProcessing.TypeVector],
+                [QgsProcessing.SourceType.TypeVector],
             )
         )
 
@@ -185,7 +185,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             self.OUTPUT_KVALITET1,
             context,
             fields,
-            QgsWkbTypes.Point,
+            QgsWkbTypes.Type.Point,
             QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
         )
         sink_kvalitet2, dest_id_kvalitet2 = self.parameterAsSink(
@@ -193,7 +193,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             self.OUTPUT_KVALITET2,
             context,
             fields,
-            QgsWkbTypes.Point,
+            QgsWkbTypes.Type.Point,
             QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
         )
         sink_kvalitet3, dest_id_kvalitet3 = self.parameterAsSink(
@@ -201,7 +201,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             self.OUTPUT_KVALITET3,
             context,
             fields,
-            QgsWkbTypes.Point,
+            QgsWkbTypes.Type.Point,
             QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
         )
         sink_fejl, dest_id_fejl = self.parameterAsSink(
@@ -209,7 +209,7 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             self.OUTPUT_FEJL,
             context,
             fields,
-            QgsWkbTypes.Point,
+            QgsWkbTypes.Type.Point,
             QgsCoordinateReferenceSystem(ADGANGSPUNKT_CRS),
         )
 
@@ -284,18 +284,18 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             # Route the feature to its quality-tier sink based on vaskestatus_kode
             if kode == 1000:
                 sink_kvalitet1.addFeature(
-                    out_feature, QgsFeatureSink.FastInsert
+                    out_feature, QgsFeatureSink.Flag.FastInsert
                 )
             elif kode == 900:
                 sink_kvalitet2.addFeature(
-                    out_feature, QgsFeatureSink.FastInsert
+                    out_feature, QgsFeatureSink.Flag.FastInsert
                 )
             elif kode in (700, 800):
                 sink_kvalitet3.addFeature(
-                    out_feature, QgsFeatureSink.FastInsert
+                    out_feature, QgsFeatureSink.Flag.FastInsert
                 )
             else:
-                sink_fejl.addFeature(out_feature, QgsFeatureSink.FastInsert)
+                sink_fejl.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
 
             # Update the progress bar
             feedback.setProgress(int(current * total))

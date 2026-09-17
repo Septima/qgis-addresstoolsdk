@@ -8,7 +8,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 description=This plugin provides tools to work with Danish addresses within the QGIS processing framework.
 description[da]=Dette plugin tilbyder værktøjer til at arbejde med danske adresser i QGIS processing.
-version=0.3.0
+version=1.0.0
 author=Septima
 email=asger@septima.dk
 
@@ -23,8 +23,8 @@ repository=https://github.com/Septima/qgis-addresstoolsdk
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog=Version 0.2: Replaced DAWA with Klimadatastyrelsens Adressevask/Adressevælger APIs. The geocode algorithm now washes the address and looks it up with Adressevælger in one call, returning the full enriched address attribute set plus vaskestatus (replacing the old A/B/C kategori). Funded by den danske QGIS Brugergruppe
-  Version 0.1: Initial version with one algorithm "Geokod danske adresser med DAWA"
+changelog=Version 1.0.0: Replaced DAWA with Klimadatastyrelsens Adressevask/Adressevælger APIs. The geocode algorithm now washes the address and looks it up with Adressevælger in one call, returning the full enriched address attribute set plus vaskestatus (replacing the old A/B/C kategori). Funded by den danske QGIS Brugergruppe
+  Version 0.1.0: Initial version with one algorithm "Geokod danske adresser med DAWA"
 
 
 # Tags are comma separated with spaces allowed

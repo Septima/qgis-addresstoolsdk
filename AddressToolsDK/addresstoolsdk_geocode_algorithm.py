@@ -372,14 +372,13 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
             En gyldig adresse kan skrives på flere forskellige måder. Eksempelvis kan det supplerende bynavn udelades, eller det forkortede adresseringsvejnavn kan anvendes i stedet for det fulde vejnavn.    
         </p>
 
-        <h3>Adressevaskede og geokodede resultater</h3>
+        <h3>Resultat fra adressevask og geokodning</h3>
 
         <p>
             Resultatet når pluginet køres er fire lag med de adressevaskede og geokodede resultater. Hvert lag indeholder de oprindelige felter, samt en række felter med resultater fra adressevasken og geokodningen.
             Adgangspunktets koordinater leveres i ETRS89 / UTM zone 32N (EPSG:25832).   
         </p>
 
-        <h3>Kvalitetsvurdering af den vaskede adresse</h3>
         <p>
             Adressevaskens svar angiver, hvor sikkert adressen er matchet, ved hjælp af en vaskestatus-kode og -tekst, som erstatter DAWA's tidligere A/B/C-kategorier. Positive koder angiver forskellige grader af match, fx 1000, 900, 800 og 700, mens negative koder betyder, at adressen ikke kunne vaskes.
             Vaskestatus_kode og vaskestatus_tekst tilføjes altid til outputtet – også når adressen ikke kunne vaskes. I disse tilfælde er de øvrige adressefelter og geometrien tomme.

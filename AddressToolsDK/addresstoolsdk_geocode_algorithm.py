@@ -295,7 +295,9 @@ class DkGeokoderAlgorithm(QgsProcessingAlgorithm):
                     out_feature, QgsFeatureSink.Flag.FastInsert
                 )
             else:
-                sink_fejl.addFeature(out_feature, QgsFeatureSink.Flag.FastInsert)
+                sink_fejl.addFeature(
+                    out_feature, QgsFeatureSink.Flag.FastInsert
+                )
 
             # Update the progress bar
             feedback.setProgress(int(current * total))

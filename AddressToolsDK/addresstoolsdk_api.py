@@ -77,7 +77,9 @@ class AdresseVaelgerClient:
 
     def _get_json(self, url):
         """GETs url and returns the parsed JSON, or None on a network error or invalid response body."""
-        QgsMessageLog.logMessage(f"Kalder: {url}", LOG_TAG, Qgis.MessageLevel.Info)
+        QgsMessageLog.logMessage(
+            f"Kalder: {url}", LOG_TAG, Qgis.MessageLevel.Info
+        )
         request = QNetworkRequest(QUrl(url))
         reply = QgsNetworkAccessManager.blockingGet(request)
         status = reply.attribute(
